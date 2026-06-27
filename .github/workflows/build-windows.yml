@@ -37,6 +37,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Jamscreenshot-Windows
-          path: dist/Jamscreenshot/
+          path: dist/Jamscreenshot.exe
           if-no-files-found: error
           retention-days: 90
