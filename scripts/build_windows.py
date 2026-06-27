@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+HOOKS_DIR = os.path.join(ROOT, "scripts", "pyinstaller_hooks")
 
 
 def main() -> None:
@@ -14,23 +16,35 @@ def main() -> None:
         sys.exit(1)
 
     os.chdir(ROOT)
+    sep = ";"
 
-    from PyInstaller.building.api import COLLECT, EXE, PYZ
-    from PyInstaller.building.build_main import Analysis, build
-    from PyInstaller.utils.hooks import collect_all
-
-    datas: list[tuple[str, str]] = [
-        (
-            os.path.join(ROOT, "PaddleOCRModel", "ppocr_keys_v1.txt"),
-            "PaddleOCRModel",
-        ),
+    cmd: list[str] = [
+        sys.executable,
+        "-m",
+        "PyInstaller",
+        "--noconfirm",
+        "--clean",
+        "--windowed",
+        "--name",
+        "Jamscreenshot",
+        "--paths",
+        ROOT,
+        "--additional-hooks-dir",
+        HOOKS_DIR,
     ]
-    for sub in ("modelv3", "modelv2"):
-        model_dir = os.path.join(ROOT, "PaddleOCRModel", sub)
-        if os.path.isdir(model_dir):
-            datas.append((model_dir, os.path.join("PaddleOCRModel", sub)))
 
-    hiddenimports = [
+    cmd.extend(
+        [
+            "--add-data",
+            os.path.join("PaddleOCRModel", "ppocr_keys_v1.txt") + sep + "PaddleOCRModel",
+        ]
+    )
+    for sub in ("modelv3", "modelv2"):
+        model_dir = os.path.join("PaddleOCRModel", sub)
+        if os.path.isdir(model_dir):
+            cmd.extend(["--add-data", model_dir + sep + model_dir])
+
+    hidden = [
         "cv2",
         "jamresourse",
         "jamWidgets",
@@ -48,56 +62,25 @@ def main() -> None:
         "shapely",
         "shapely.geometry",
     ]
-    binaries: list[tuple[str, str, str]] = []
+    for name in hidden:
+        cmd.extend(["--hidden-import", name])
 
-    for pkg in ("cv2", "numpy", "PyQt5", "onnxruntime", "pyttsx3", "PIL", "pyclipper", "shapely"):
-        pkg_datas, pkg_binaries, pkg_hidden = collect_all(pkg)
-        datas += pkg_datas
-        binaries += pkg_binaries
-        hiddenimports += pkg_hidden
+    for pkg in ("PyQt5", "onnxruntime", "numpy", "pyttsx3", "PIL", "pyclipper", "shapely"):
+        cmd.extend(["--collect-all", pkg])
 
-    a = Analysis(
-        [os.path.join(ROOT, "jamscreenshot.py")],
-        pathex=[ROOT],
-        binaries=binaries,
-        datas=datas,
-        hiddenimports=hiddenimports,
-        hookspath=[],
-        hooksconfig={},
-        runtime_hooks=[],
-        excludes=[],
-        noarchive=False,
-        optimize=0,
-    )
-    pyz = PYZ(a.pure)
-    exe = EXE(
-        pyz,
-        a.scripts,
-        [],
-        exclude_binaries=True,
-        name="Jamscreenshot",
-        debug=False,
-        bootloader_ignore_signals=False,
-        strip=False,
-        upx=False,
-        console=False,
-        disable_windowed_traceback=False,
-        argv_emulation=False,
-        target_arch=None,
-        codesign_identity=None,
-        entitlements_file=None,
-    )
-    coll = COLLECT(
-        exe,
-        a.binaries,
-        a.datas,
-        strip=False,
-        upx=False,
-        upx_exclude=[],
-        name="Jamscreenshot",
+    cmd.extend(
+        [
+            "--exclude-module",
+            "pytest",
+            "--exclude-module",
+            "onnx",
+        ]
     )
 
-    build(coll)
+    cmd.append("jamscreenshot.py")
+
+    print("Running:", " ".join(cmd))
+    subprocess.check_call(cmd, cwd=ROOT)
     print("Build output: dist/Jamscreenshot/Jamscreenshot.exe")
 
 
