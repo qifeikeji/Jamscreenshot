@@ -15,7 +15,8 @@ def main() -> None:
 
     os.chdir(ROOT)
 
-    from PyInstaller.building.api import COLLECT, EXE, PYZ, Analysis
+    from PyInstaller.building.api import COLLECT, EXE, PYZ
+    from PyInstaller.building.build_main import Analysis, build
     from PyInstaller.utils.hooks import collect_all
 
     datas: list[tuple[str, str]] = [
@@ -95,8 +96,6 @@ def main() -> None:
         upx_exclude=[],
         name="Jamscreenshot",
     )
-
-    from PyInstaller.building.build_main import build
 
     build(coll)
     print("Build output: dist/Jamscreenshot/Jamscreenshot.exe")
