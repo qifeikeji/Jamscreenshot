@@ -86,8 +86,6 @@ def main() -> None:
         cmd.extend(["--hidden-import", name])
     for pkg in collect_packages:
         cmd.extend(["--collect-all", pkg])
-    for meta in ("opencv-contrib-python", "numpy", "onnxruntime", "PyQt5"):
-        cmd.extend(["--copy-metadata", meta])
 
     cmd.append("jamscreenshot.py")
     print("Running:", " ".join(cmd))
