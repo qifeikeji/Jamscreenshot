@@ -1,0 +1,5 @@
+# CI / PyInstaller 打包额外依赖（runtime 见 requirement.txt）
+pyinstaller>=6.3
+onnxruntime>=1.16.0
+pyclipper>=1.3.0
+shapely>=2.0.0
